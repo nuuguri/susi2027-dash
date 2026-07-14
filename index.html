@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>2027 수시 대비 입시결과 대시보드</title>
+<style>
+  :root{
+    --ink:#1b2a4a; --accent:#2f4f8f; --accent-soft:#e8eef9;
+    --bg:#f4f6fa; --card:#ffffff; --line:#dde3ee; --muted:#6b7690;
+    --chip:#eef2fa; --chip-on:#2f4f8f; --warn:#b23c3c; --ok:#1f7a4d;
+    --radius:12px; --shadow:0 1px 3px rgba(27,42,74,.08), 0 4px 14px rgba(27,42,74,.06);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Pretendard','Malgun Gothic','맑은 고딕','Apple SD Gothic Neo',sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  header.top{
+    background:linear-gradient(135deg,#1b2a4a 0%,#2f4f8f 100%); color:#fff;
+    padding:20px 24px 18px;
+  }
+  header.top h1{font-size:20px; font-weight:700; letter-spacing:-.2px;}
+  header.top p{font-size:12.5px; opacity:.82; margin-top:5px; max-width:860px;}
+  .sample-banner{
+    background:#fff7e0; border-bottom:1px solid #eadfae; color:#7a5c00;
+    font-size:12.5px; padding:8px 24px;
+  }
+  .layout{display:flex; min-height:calc(100vh - 90px); max-width:1480px; margin:0 auto;}
+  /* ── 좌측: 대학 목록 ── */
+  aside{
+    width:232px; flex:none; padding:18px 12px 30px 18px;
+    position:sticky; top:0; align-self:flex-start; max-height:100vh; overflow-y:auto;
+  }
+  aside h2{font-size:12px; color:var(--muted); font-weight:600; margin:4px 4px 8px; letter-spacing:.4px;}
+  #uniSearch{
+    width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px;
+    font-size:13px; margin-bottom:10px; background:var(--card); color:var(--ink); outline:none;
+  }
+  #uniSearch:focus{border-color:var(--accent);}
+  .uni-btn{
+    display:flex; align-items:center; justify-content:space-between; gap:6px;
+    width:100%; text-align:left; padding:9px 11px; margin-bottom:4px;
+    border:1px solid transparent; border-radius:9px; background:transparent;
+    font-size:14px; font-weight:600; color:var(--ink); cursor:pointer; font-family:inherit;
+  }
+  .uni-btn .yr{font-size:10.5px; font-weight:600; color:var(--muted); white-space:nowrap;}
+  .uni-btn:hover{background:#e9edf6;}
+  .uni-btn.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .uni-btn.on .yr{color:#cdd9f0;}
+  /* ── 본문 ── */
+  main{flex:1; min-width:0; padding:20px 26px 80px;}
+  .placeholder{
+    margin-top:14vh; text-align:center; color:var(--muted); font-size:14.5px;
+  }
+  .placeholder b{color:var(--ink);}
+  .uni-head{margin:4px 0 14px;}
+  .uni-head h2{font-size:22px; font-weight:800; letter-spacing:-.3px; display:inline;}
+  .badge{
+    display:inline-block; font-size:11.5px; font-weight:700; padding:3px 9px;
+    border-radius:20px; vertical-align:3px; margin-left:8px;
+  }
+  .badge.year{background:var(--accent-soft); color:var(--accent);}
+  .src-line{font-size:12px; color:var(--muted); margin-top:6px;}
+  .src-line code{font-family:inherit; background:#eceff5; padding:1px 6px; border-radius:5px;}
+  /* 전형 칩 */
+  .track-groups{margin:16px 0 6px;}
+  .tg{margin-bottom:10px; display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
+  .tg .tg-label{font-size:11.5px; font-weight:700; color:var(--muted); flex:none; width:76px;}
+  .chips{display:flex; flex-wrap:wrap; gap:7px;}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--ink);
+    font-size:13.5px; font-weight:600; font-family:inherit; padding:7px 14px;
+    border-radius:22px; cursor:pointer; transition:all .12s;
+  }
+  .chip:hover{border-color:var(--accent); color:var(--accent);}
+  .chip.on{background:var(--chip-on); border-color:var(--chip-on); color:#fff;}
+  .chip.none{
+    color:#a7afc2; background:#f0f2f7; cursor:not-allowed; text-decoration:line-through;
+  }
+  .chip .mini{font-size:10.5px; font-weight:700; margin-left:5px; opacity:.85;}
+  /* 자료 영역 */
+  .viewer{margin-top:18px;}
+  .viewer-head{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 18px; box-shadow:var(--shadow);
+  }
+  .viewer-head h3{font-size:17px; font-weight:800;}
+  .viewer-head .doc{font-size:12.5px; color:var(--muted); margin-top:4px;}
+  .viewer-head .note{
+    font-size:12.5px; color:#7a5c00; background:#fff7e0; border:1px solid #eadfae;
+    border-radius:8px; padding:7px 10px; margin-top:9px;
+  }
+  .no-data{
+    margin-top:14px; background:var(--card); border:1px dashed var(--line); border-radius:var(--radius);
+    padding:34px 20px; text-align:center; color:var(--muted); font-size:14px;
+  }
+  .page-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-top:16px; overflow:hidden;
+  }
+  .page-card .cap{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    padding:10px 16px; border-bottom:1px solid var(--line); font-size:13px;
+  }
+  .cap .cap-title{font-weight:700;}
+  .cap .tag{
+    font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:12px;
+    background:var(--accent-soft); color:var(--accent);
+  }
+  .cap .tag.dist{background:#e5f4ec; color:var(--ok);}
+  .cap .pg{margin-left:auto; color:var(--muted); font-size:11.5px;}
+  .cap-note{width:100%; font-size:11.5px; color:var(--muted);}
+  .page-card .imgwrap{background:#eef0f5; text-align:center; cursor:zoom-in;}
+  .page-card img{
+    width:100%; max-width:1100px; height:auto; display:block; margin:0 auto;
+    background:#fff;
+  }
+  .ytabs{display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; margin-top:11px;}
+  .ytab{border:none; background:var(--card); color:var(--muted); font-size:13px; font-weight:700; font-family:inherit; padding:7px 16px; cursor:pointer;}
+  .ytab + .ytab{border-left:1px solid var(--line);}
+  .ytab.on26{background:#e8eef9; color:#2f4f8f;}
+  .ytab.on25{background:#fdf1dc; color:#9a6a12;}
+  .ytab.none{color:#b8bfd0; cursor:not-allowed; text-decoration:line-through;}
+  .ybadge{font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:11px;}
+  .ybadge.y26{background:#e8eef9; color:#2f4f8f;}
+  .ybadge.y25{background:#fdf1dc; color:#9a6a12;}
+  .hint{font-size:11.5px; color:var(--muted); margin-top:10px; text-align:center;}
+  footer{
+    border-top:1px solid var(--line); margin-top:40px; padding:18px 24px 30px;
+    font-size:11.5px; color:var(--muted); text-align:center;
+  }
+  /* ── 라이트박스 ── */
+  #lb{
+    position:fixed; inset:0; background:rgba(12,18,32,.92); z-index:100;
+    display:none; touch-action:none;
+  }
+  #lb.open{display:block;}
+  #lbStage{position:absolute; inset:0; overflow:hidden; cursor:grab;}
+  #lbStage.drag{cursor:grabbing;}
+  #lbImg{
+    position:absolute; left:50%; top:50%;
+    transform-origin:0 0; user-select:none; -webkit-user-drag:none;
+    box-shadow:0 8px 40px rgba(0,0,0,.5); background:#fff;
+  }
+  .lb-bar{
+    position:absolute; left:0; right:0; bottom:0; z-index:102;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:12px; background:linear-gradient(transparent, rgba(10,14,24,.75));
+  }
+  .lb-bar button{
+    background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.25);
+    border-radius:8px; font-size:13px; font-family:inherit; padding:7px 13px; cursor:pointer;
+  }
+  .lb-bar button:hover{background:rgba(255,255,255,.25);}
+  #lbCap{
+    position:absolute; top:0; left:0; right:0; z-index:102; text-align:center;
+    color:#e8ecf5; font-size:13px; padding:13px 60px;
+    background:linear-gradient(rgba(10,14,24,.7), transparent);
+  }
+  #lbClose{
+    position:absolute; top:10px; right:12px; z-index:103;
+    background:rgba(255,255,255,.14); color:#fff; border:none; border-radius:50%;
+    width:38px; height:38px; font-size:17px; cursor:pointer;
+  }
+  .lb-nav{
+    position:absolute; top:50%; transform:translateY(-50%); z-index:103;
+    background:rgba(255,255,255,.1); color:#fff; border:none; border-radius:50%;
+    width:44px; height:44px; font-size:19px; cursor:pointer;
+  }
+  .lb-nav:hover{background:rgba(255,255,255,.28);}
+  #lbPrev{left:12px;} #lbNext{right:12px;}
+  @media (max-width:860px){
+    .layout{flex-direction:column;}
+    aside{width:100%; position:static; max-height:none; padding:14px 16px 4px;}
+    .uni-list{display:flex; flex-wrap:wrap; gap:6px;}
+    .uni-btn{width:auto; padding:7px 12px; font-size:13px; border:1px solid var(--line); background:var(--card);}
+    .uni-btn .yr{display:none;}
+    main{padding:14px 14px 60px;}
+    .tg .tg-label{width:100%;}
+    #lbPrev{left:6px;} #lbNext{right:6px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>2027 수시 대비 입시결과 대시보드</h1>
+  <p>각 대학 입학처가 공개한 입시결과 자료(합격자 분포도·결과표)를 원본 이미지 그대로 수록했습니다. 수치를 가공하거나 재구성하지 않았으며, 자료의 기준(최종등록자·1단계 합격자 등)은 각 원본 페이지의 표기를 따릅니다.</p>
+</header>
+
+<div class="layout">
+  <aside>
+    <h2>대학 선택</h2>
+    <input id="uniSearch" type="text" placeholder="대학명 검색" autocomplete="off">
+    <div class="uni-list" id="uniList"></div>
+  </aside>
+
+  <main id="main">
+    <div class="placeholder" id="placeholder">
+      <p style="font-size:34px; margin-bottom:12px;">🎓</p>
+      <p>왼쪽에서 <b>대학</b>을 선택하시고, 이어서 <b>전형</b>을 선택하시면<br>해당 전형의 입시결과 자료가 이 영역에 표시됩니다.</p>
+    </div>
+    <div id="uniView" style="display:none;">
+      <div class="uni-head">
+        <h2 id="uniName"></h2><span class="badge year" id="uniYears"></span>
+        <div class="src-line" id="uniSrc"></div>
+      </div>
+      <div class="track-groups" id="trackGroups"></div>
+      <div class="viewer" id="viewer" style="display:none;">
+        <div class="viewer-head">
+          <h3 id="tTitle"></h3>
+          <div class="doc" id="tDoc"></div>
+          <div class="note" id="tNote" style="display:none;"></div>
+          <div class="ytabs" id="yTabs" style="display:none;"></div>
+        </div>
+        <div id="pages"></div>
+        <p class="hint">이미지를 클릭하시면 크게 확대해서 보실 수 있습니다. 확대 화면에서는 마우스 휠·드래그(모바일은 손가락)로 확대와 이동이 가능합니다.</p>
+      </div>
+      <div class="no-data" id="noData" style="display:none;"></div>
+    </div>
+  </main>
+</div>
+
+<footer>
+  본 페이지는 열람 전용 정적 페이지로, 내용 수정 기능이 없습니다. 자료 출처: 각 대학 입학처 공개 자료.
+</footer>
+
+<!-- 라이트박스 -->
+<div id="lb" role="dialog" aria-modal="true">
+  <div id="lbCap"></div>
+  <button id="lbClose" title="닫기 (Esc)">✕</button>
+  <button class="lb-nav" id="lbPrev" title="이전 페이지 (←)">‹</button>
+  <button class="lb-nav" id="lbNext" title="다음 페이지 (→)">›</button>
+  <div id="lbStage"><img id="lbImg" alt="입시결과 원본 확대 이미지" draggable="false"></div>
+  <div class="lb-bar">
+    <button data-z="out">− 축소</button>
+    <button data-z="fit">화면 맞춤</button>
+    <button data-z="100">원본 100%</button>
+    <button data-z="in">+ 확대</button>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+"use strict";
+/* 데이터는 data.js에서 로드합니다 */
+const TYPE_ORDER = ["학생부교과","학생부종합","논술","공통"];
+
+/* ───────────── 상태·요소 ───────────── */
+let curUni = null, curTrack = null, curYears = null, curYear = null;
+const $ = id => document.getElementById(id);
+
+/* 대학 목록 */
+function renderUniList(filter){
+  const list = $("uniList"); list.innerHTML = "";
+  DATA.filter(u => !filter || u.name.includes(filter)).forEach(u => {
+    const b = document.createElement("button");
+    b.className = "uni-btn" + (curUni && curUni.id === u.id ? " on" : "");
+    b.innerHTML = `<span>${u.name}</span><span class="yr">${u.years.replace("학년도","")}</span>`;
+    b.onclick = () => selectUni(u);
+    list.appendChild(b);
+  });
+  if (!list.children.length) list.innerHTML = '<p style="font-size:12.5px;color:var(--muted);padding:6px;">검색 결과가 없습니다.</p>';
+}
+$("uniSearch").addEventListener("input", e => renderUniList(e.target.value.trim()));
+
+function selectUni(u){
+  curUni = u; curTrack = null;
+  renderUniList($("uniSearch").value.trim());
+  $("placeholder").style.display = "none";
+  $("uniView").style.display = "block";
+  $("uniName").textContent = u.name;
+  $("uniYears").textContent = "자료 학년도: " + u.years;
+  $("uniSrc").innerHTML = `${u.origin} · 원자료 <code>${u.source}</code>`;
+  renderTracks();
+  $("viewer").style.display = "none";
+  $("noData").style.display = "none";
+  window.scrollTo({top:0});
+}
+
+/* 전형 칩 */
+function renderTracks(){
+  const wrap = $("trackGroups"); wrap.innerHTML = "";
+  TYPE_ORDER.forEach(tp => {
+    const tracks = curUni.tracks.filter(t => (t.type || "기타") === tp);
+    if (!tracks.length) return;
+    const g = document.createElement("div"); g.className = "tg";
+    g.innerHTML = `<span class="tg-label">${tp}</span>`;
+    const chips = document.createElement("div"); chips.className = "chips";
+    tracks.forEach(t => {
+      const c = document.createElement("button");
+      const noData = t.years ? !t.years.some(y => y.pages && y.pages.length) : (!t.pages || !t.pages.length);
+      c.className = "chip" + (noData ? " none" : "") + (curTrack === t ? " on" : "");
+      c.innerHTML = t.name + (noData ? '<span class="mini">자료 없음</span>' : "");
+      if (!noData) c.onclick = () => selectTrack(t);
+      else c.title = t.reason || "입학처 공개 자료에 이 전형의 결과가 없습니다.";
+      chips.appendChild(c);
+    });
+    g.appendChild(chips); wrap.appendChild(g);
+  });
+}
+
+function selectTrack(t){
+  curTrack = t; renderTracks();
+  $("noData").style.display = "none";
+  $("viewer").style.display = "block";
+  $("tTitle").textContent = `${curUni.name} · ${t.name}`;
+  const years = t.years || [{y:"2026", doc:t.doc, note:t.note, reason:t.reason, pages:t.pages}];
+  curYears = years;
+  let first = years.find(y => y.pages && y.pages.length) || years[0];
+  renderYearTabs(years, first);
+  showYear(first);
+}
+function renderYearTabs(years, active){
+  const w = $("yTabs");
+  if (years.length <= 1 && (!years[0] || years[0].y === "2026")){ w.style.display = "none"; }
+  else {
+    w.style.display = "inline-flex"; w.innerHTML = "";
+    years.forEach(yr => {
+      const b = document.createElement("button");
+      const has = yr.pages && yr.pages.length;
+      b.className = "ytab" + (has ? (yr === active ? (yr.y === "2026" ? " on26" : " on25") : "") : " none");
+      b.textContent = yr.y + "학년도 결과";
+      if (has) b.onclick = () => { renderYearTabs(years, yr); showYear(yr); };
+      else b.title = yr.reason || "이 학년도의 발표 자료가 없습니다.";
+      w.appendChild(b);
+    });
+  }
+}
+function showYear(yr){
+  curYear = yr;
+  $("tDoc").textContent = (yr.doc || "");
+  const n = $("tNote");
+  if (yr.note){ n.textContent = "참고: " + yr.note; n.style.display = "block"; } else n.style.display = "none";
+  const pg = $("pages"); pg.innerHTML = "";
+  if (!yr.pages || !yr.pages.length){
+    pg.innerHTML = `<div class="no-data">${yr.reason || "이 학년도의 발표 자료가 없습니다."}</div>`;
+    return;
+  }
+  const ycls = yr.y === "2026" ? "y26" : "y25";
+  yr.pages.forEach((p, i) => {
+    const card = document.createElement("div"); card.className = "page-card";
+    card.innerHTML = `
+      <div class="cap">
+        <span class="cap-title">${p.label || "결과 자료"}</span>
+        <span class="ybadge ${ycls}">${yr.y}학년도</span>
+        ${p.dist ? '<span class="tag dist">분포도</span>' : '<span class="tag">결과표</span>'}
+        <span class="pg">${p.pg || ""}</span>
+        ${p.note ? `<span class="cap-note">※ ${p.note}</span>` : ""}
+      </div>
+      <div class="imgwrap" title="클릭하면 확대됩니다"><img src="${p.src}" loading="lazy" decoding="async" alt="${curUni.name} ${t2(curTrack.name)} ${p.label || ""}"></div>`;
+    card.querySelector(".imgwrap").onclick = () => openLB(yr.pages, i);
+    pg.appendChild(card);
+  });
+  $("viewer").scrollIntoView({behavior:"smooth", block:"start"});
+}
+function t2(s){ return s; }
+
+/* ───────────── 라이트박스 (확대·이동) ───────────── */
+const lb = $("lb"), stage = $("lbStage"), img = $("lbImg");
+let lbPages = [], lbIdx = 0;
+let sc = 1, tx = 0, ty = 0, natW = 0, natH = 0;
+let fitScale = 1;
+
+function openLB(pages, idx){
+  lbPages = pages; lbIdx = idx;
+  lb.classList.add("open");
+  document.body.style.overflow = "hidden";
+  loadLB();
+}
+function loadLB(){
+  const p = lbPages[lbIdx];
+  $("lbCap").textContent = `${curUni.name} · ${curTrack.name}${curYear ? " · " + curYear.y + "학년도" : ""} — ${p.label || ""} (${lbIdx + 1}/${lbPages.length})`;
+  img.src = p.src;
+  img.onload = () => {
+    natW = img.naturalWidth; natH = img.naturalHeight;
+    img.style.width = natW + "px"; img.style.height = natH + "px";
+    fitScale = Math.min(stage.clientWidth / natW, (stage.clientHeight - 40) / natH);
+    zoomFit();
+  };
+  $("lbPrev").style.display = lbPages.length > 1 ? "block" : "none";
+  $("lbNext").style.display = lbPages.length > 1 ? "block" : "none";
+}
+function apply(){
+  const maxS = 8, minS = fitScale * 0.4;
+  sc = Math.max(minS, Math.min(maxS, sc));
+  img.style.transform = `translate(${tx}px, ${ty}px) scale(${sc})`;
+}
+function center(){
+  tx = (stage.clientWidth - natW * sc) / 2 - stage.clientWidth / 2;
+  ty = (stage.clientHeight - natH * sc) / 2 - stage.clientHeight / 2;
+  /* lbImg는 left 50%/top 50% 기준이므로 스테이지 중앙 정렬로 보정 */
+  tx += stage.clientWidth / 2 - (stage.clientWidth / 2);
+  ty += stage.clientHeight / 2 - (stage.clientHeight / 2);
+  tx = -natW * sc / 2 + 0; ty = -natH * sc / 2 + 0;
+  apply();
+}
+function zoomFit(){ sc = fitScale; center(); }
+function zoomTo(target, cx, cy){
+  /* cx,cy: 스테이지 좌표(중앙 원점) 기준 확대 기준점 */
+  const rect = stage.getBoundingClientRect();
+  const px = (cx === undefined ? 0 : cx - rect.left - rect.width / 2);
+  const py = (cy === undefined ? 0 : cy - rect.top - rect.height / 2);
+  const k = target / sc;
+  tx = px - k * (px - tx); ty = py - k * (py - ty);
+  sc = target; apply();
+}
+document.querySelector(".lb-bar").addEventListener("click", e => {
+  const z = e.target.dataset && e.target.dataset.z; if (!z) return;
+  if (z === "in") zoomTo(sc * 1.4);
+  else if (z === "out") zoomTo(sc / 1.4);
+  else if (z === "fit") zoomFit();
+  else if (z === "100") zoomTo(1);
+});
+stage.addEventListener("wheel", e => {
+  e.preventDefault();
+  zoomTo(sc * Math.pow(1.0015, -e.deltaY), e.clientX, e.clientY);
+}, {passive:false});
+stage.addEventListener("dblclick", e => {
+  if (Math.abs(sc - fitScale) < 0.01) zoomTo(Math.max(1, fitScale * 2.4), e.clientX, e.clientY);
+  else zoomFit();
+});
+/* 드래그·핀치 */
+const pts = new Map(); let lastDist = 0;
+stage.addEventListener("pointerdown", e => {
+  stage.setPointerCapture(e.pointerId);
+  pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  stage.classList.add("drag");
+});
+stage.addEventListener("pointermove", e => {
+  if (!pts.has(e.pointerId)) return;
+  const prev = pts.get(e.pointerId);
+  pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (pts.size === 1){
+    tx += e.clientX - prev.x; ty += e.clientY - prev.y; apply();
+  } else if (pts.size === 2){
+    const [a, b] = [...pts.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (lastDist) zoomTo(sc * d / lastDist, (a.x + b.x) / 2, (a.y + b.y) / 2);
+    lastDist = d;
+  }
+});
+["pointerup","pointercancel","pointerleave"].forEach(ev =>
+  stage.addEventListener(ev, e => { pts.delete(e.pointerId); if (pts.size < 2) lastDist = 0; if (!pts.size) stage.classList.remove("drag"); }));
+/* 이동·닫기 */
+function lbNav(d){ lbIdx = (lbIdx + d + lbPages.length) % lbPages.length; loadLB(); }
+$("lbPrev").onclick = () => lbNav(-1);
+$("lbNext").onclick = () => lbNav(1);
+$("lbClose").onclick = closeLB;
+lb.addEventListener("click", e => { if (e.target === lb) closeLB(); });
+function closeLB(){ lb.classList.remove("open"); document.body.style.overflow = ""; img.src = ""; }
+document.addEventListener("keydown", e => {
+  if (!lb.classList.contains("open")) return;
+  if (e.key === "Escape") closeLB();
+  else if (e.key === "ArrowLeft") lbNav(-1);
+  else if (e.key === "ArrowRight") lbNav(1);
+  else if (e.key === "+" || e.key === "=") zoomTo(sc * 1.3);
+  else if (e.key === "-") zoomTo(sc / 1.3);
+});
+window.addEventListener("resize", () => {
+  if (lb.classList.contains("open") && natW){
+    fitScale = Math.min(stage.clientWidth / natW, (stage.clientHeight - 40) / natH);
+    apply();
+  }
+});
+
+/* 초기 렌더 */
+renderUniList("");
+</script>
+</body>
+</html>
+                                                                                                                                                                            
