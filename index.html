@@ -128,6 +128,22 @@
   .ybadge{font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:11px;}
   .ybadge.y26{background:#e8eef9; color:#2f4f8f;}
   .ybadge.y25{background:#fdf1dc; color:#9a6a12;}
+    .utable-wrap{overflow-x:auto;}
+  .utable{width:100%;border-collapse:collapse;font-size:14.5px;background:#fff;}
+  .utable th{background:#eef2fa;color:#2f4f8f;font-weight:700;padding:9px 11px;border:1px solid #dde3ee;position:sticky;top:0;text-align:center;}
+  .utable th.etc{background:#f0f2f7;color:#6b7690;}
+  .utable td{padding:8px 11px;border:1px solid #e7ebf3;text-align:center;white-space:nowrap;}
+  .utable td:first-child{font-weight:600;}
+  .stabs{display:flex;gap:8px;margin-top:16px;}
+  .stab{border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:13.5px;font-weight:700;font-family:inherit;padding:8px 18px;border-radius:10px;cursor:pointer;}
+  .stab:hover{border-color:var(--accent);color:var(--accent);}
+  .stab.on{background:var(--chip-on);border-color:var(--chip-on);color:#fff;}
+  .utable td.etccell{background:#fafbfd;color:#4a5468;}
+  .utable tr:nth-child(even) td{background:#f7f9fc;}
+  .utable tr:nth-child(even) td.etccell{background:#f3f5f9;}
+  .basis{font-size:11px;font-weight:700;background:#fff7e0;color:#7a5c00;border:1px solid #eadfae;border-radius:11px;padding:2px 8px;}
+  .obtn{font-size:11.5px;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:3px 10px;cursor:pointer;font-family:inherit;color:var(--muted);}
+  .obtn:hover{border-color:var(--accent);color:var(--accent);}
   .hint{font-size:11.5px; color:var(--muted); margin-top:10px; text-align:center;}
   footer{
     border-top:1px solid var(--line); margin-top:40px; padding:18px 24px 30px;
@@ -244,7 +260,7 @@
   </div>
 </div>
 
-<script src="data.js"></script>
+<script src="data.js?v=73"></script>
 <script>
 "use strict";
 /* 데이터는 data.js에서 로드합니다 */
@@ -331,7 +347,7 @@ function renderYearTabs(years, active){
     });
   }
 }
-function showYear(yr){
+function showYear(yr, sub){
   curYear = yr;
   $("tDoc").textContent = (yr.doc || "");
   const n = $("tNote");
@@ -342,8 +358,40 @@ function showYear(yr){
     return;
   }
   const ycls = yr.y === "2026" ? "y26" : "y25";
-  yr.pages.forEach((p, i) => {
+  const tables = yr.pages.filter(p => p.table);
+  const imgs = yr.pages.filter(p => !p.table);
+  let mode = sub || (tables.length ? "table" : "img");
+  if (mode === "table" && !tables.length) mode = "img";
+  if (tables.length && imgs.length){
+    const st = document.createElement("div"); st.className = "stabs";
+    st.innerHTML = `<button class="stab${mode==='table'?' on':''}">통일 양식 표</button><button class="stab${mode==='img'?' on':''}">원본 이미지 (${imgs.length}장)</button>`;
+    const bs = st.querySelectorAll(".stab");
+    bs[0].onclick = () => showYear(yr, "table");
+    bs[1].onclick = () => showYear(yr, "img");
+    pg.appendChild(st);
+  }
+  const shown = (tables.length && imgs.length) ? (mode === "table" ? tables : imgs) : yr.pages;
+  shown.forEach(p => {
     const card = document.createElement("div"); card.className = "page-card";
+    if (p.table){
+      const cols=p.table.cols, rows=p.table.rows;
+      let thead='<tr>'+cols.map(c=>`<th class="${c.etc?'etc':''}">${c.h}</th>`).join('')+'</tr>';
+      let tbody=rows.map(r=>'<tr>'+r.map((v,ci)=>`<td class="${cols[ci]&&cols[ci].etc?'etccell':''}">${v||'–'}</td>`).join('')+'</tr>').join('');
+      card.innerHTML=`
+        <div class="cap">
+          <span class="cap-title">${p.label||'통일 양식 결과표'}</span>
+          <span class="ybadge ${ycls}">${yr.y}학년도</span>
+          <span class="tag">통일표</span>
+          ${p.basis?`<span class="basis">기준: ${p.basis}</span>`:''}
+          <span class="pg">${p.pg||'기계 추출·원본 대조'}</span>
+          ${p.note?`<span class="cap-note">※ ${p.note}</span>`:''}
+        </div>
+        <div class="utable-wrap" style="padding:10px 14px;"><table class="utable">${'<thead>'+thead+'</thead><tbody>'+tbody+'</tbody>'}</table></div>
+        <div style="padding:0 14px 12px;"><button class="obtn">원본 이미지로 대조하기</button></div>`;
+      card.querySelector('.obtn').onclick=()=>openLB((p.origin||[]).map(s=>({src:s,label:'원본'})),0);
+      pg.appendChild(card);
+      return;
+    }
     card.innerHTML = `
       <div class="cap">
         <span class="cap-title">${p.label || "결과 자료"}</span>
@@ -353,10 +401,10 @@ function showYear(yr){
         ${p.note ? `<span class="cap-note">※ ${p.note}</span>` : ""}
       </div>
       <div class="imgwrap" title="클릭하면 확대됩니다"><img src="${p.src}" loading="lazy" decoding="async" alt="${curUni.name} ${t2(curTrack.name)} ${p.label || ""}"></div>`;
-    card.querySelector(".imgwrap").onclick = () => openLB(yr.pages, i);
+    card.querySelector(".imgwrap").onclick = () => openLB(imgs, imgs.indexOf(p));
     pg.appendChild(card);
   });
-  $("viewer").scrollIntoView({behavior:"smooth", block:"start"});
+  if (!sub) $("viewer").scrollIntoView({behavior:"smooth", block:"start"});
 }
 function t2(s){ return s; }
 
